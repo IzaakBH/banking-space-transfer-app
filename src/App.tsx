@@ -61,15 +61,25 @@ const SpaceTransferApp: React.FC = () => {
 
     const API_BASE = environment === 'live' ? '/live/api' : '/dev/api';
 
+    // Generic API fetch wrapper
+    const apiFetch = async (endpoint: string, options?: RequestInit) => {
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+            ...options,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+                ...options?.headers,
+            }
+        });
+        if (!res.ok) throw new Error(`API request failed: ${endpoint}`);
+        return res.json();
+    };
+
     const fetchAccounts = async (): Promise<void> => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${API_BASE}/v2/accounts`, {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-            if (!res.ok) throw new Error('Failed to fetch accounts');
-            const data = await res.json();
+            const data = await apiFetch('/v2/accounts');
             setAccounts(data.accounts || []);
             setStep('selectAccount');
         } catch (err) {
@@ -85,21 +95,13 @@ const SpaceTransferApp: React.FC = () => {
         try {
             const now = new Date();
             const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
             const minDate = weekAgo.toISOString();
             const maxDate = now.toISOString();
 
-            const res = await fetch(
-                `${API_BASE}/v2/feed/account/${accountUid}/settled-transactions-between?minTransactionTimestamp=${minDate}&maxTransactionTimestamp=${maxDate}`,
-                { headers: { 'Authorization': `Bearer ${accessToken}` }}
+            const data = await apiFetch(
+                `/v2/feed/account/${accountUid}/settled-transactions-between?minTransactionTimestamp=${minDate}&maxTransactionTimestamp=${maxDate}`
             );
 
-            if (!res.ok) throw new Error('Failed to fetch transactions');
-            const data = await res.json();
-
-            console.log(data);
-
-            // Filter for outbound transactions without "transferred: true" in user note
             const filtered = (data.feedItems || []).filter((item: Transaction) =>
                 item.direction === 'OUT' &&
                 item.status === 'SETTLED' &&
@@ -120,12 +122,7 @@ const SpaceTransferApp: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${API_BASE}/v2/account/${accountUid}/spaces`, {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-
-            if (!res.ok) throw new Error('Failed to fetch spaces');
-            const data = await res.json();
+            const data = await apiFetch(`/v2/account/${accountUid}/spaces`);
             setSavingsGoals(data.savingsGoals || []);
             setStep('selectSpace');
         } catch (err) {
@@ -138,39 +135,28 @@ const SpaceTransferApp: React.FC = () => {
     const tagTransaction = async (): Promise<void> => {
         if (!selectedTransaction || !selectedAccount) return;
 
-        // Tag transaction
         const note = selectedTransaction.userNote
             ? `${selectedTransaction.userNote} | transferred: true`
             : 'transferred: true';
 
-        const tagRes = await fetch(
-            `${API_BASE}/v2/feed/account/${selectedAccount.accountUid}/category/${selectedTransaction.categoryUid}/${selectedTransaction.feedItemUid}/user-note`,
+        await apiFetch(
+            `/v2/feed/account/${selectedAccount.accountUid}/category/${selectedTransaction.categoryUid}/${selectedTransaction.feedItemUid}/user-note`,
             {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({userNote: note})
+                body: JSON.stringify({ userNote: note })
             }
         );
 
-        if (!tagRes.ok) throw new Error('Failed to tag transaction');
-
-        setSuccess('Transfer completed successfully!');
-
-        // Remove transaction from list and reset
+        setSuccess('Transaction tagged successfully!');
         setTransactions(prev => prev.filter(t => t.feedItemUid !== selectedTransaction.feedItemUid));
         setSelectedTransaction(null);
         setSelectedSavingsGoal(null);
         setStep('selectTransaction');
-
         setTimeout(() => setSuccess(null), 3000);
     };
 
     const ignoreTransaction = async (): Promise<void> => {
         if (!selectedAccount || !selectedTransaction) return;
-
         setLoading(true);
         setError(null);
         try {
@@ -188,17 +174,10 @@ const SpaceTransferApp: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const transferUid = selectedTransaction.feedItemUid;
-
-            // Withdraw from space
-            const withdrawRes = await fetch(
-                `${API_BASE}/v2/account/${selectedAccount.accountUid}/savings-goals/${selectedSavingsGoal.savingsGoalUid}/withdraw-money/${transferUid}`,
+            await apiFetch(
+                `/v2/account/${selectedAccount.accountUid}/savings-goals/${selectedSavingsGoal.savingsGoalUid}/withdraw-money/${selectedTransaction.feedItemUid}`,
                 {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify({
                         amount: {
                             currency: selectedTransaction.amount.currency,
@@ -207,8 +186,6 @@ const SpaceTransferApp: React.FC = () => {
                     })
                 }
             );
-
-            if (!withdrawRes.ok) throw new Error('Failed to withdraw from space');
 
             await tagTransaction();
         } catch (err) {
@@ -234,19 +211,14 @@ const SpaceTransferApp: React.FC = () => {
         setSuccess(null);
     };
 
-    const renderSpaceButton = (
-        space: SavingsGoal,
-        isSelected: boolean,
-        onSelect: () => void,
-    ) => {
+    const renderSpaceButton = (space: SavingsGoal, isSelected: boolean, onSelect: () => void) => {
         const balance = space.totalSaved;
-        const uid = space.savingsGoalUid;
         const hasInsufficientFunds = (selectedTransaction && balance &&
             balance.minorUnits < selectedTransaction.amount.minorUnits) ?? true;
 
         return (
             <button
-                key={uid}
+                key={space.savingsGoalUid}
                 onClick={() => !hasInsufficientFunds && onSelect()}
                 disabled={hasInsufficientFunds}
                 className={`w-full p-4 rounded-xl transition-all text-left shadow-sm ${
@@ -271,13 +243,47 @@ const SpaceTransferApp: React.FC = () => {
                             </div>
                         )}
                     </div>
-                    {isSelected && (
-                        <CheckCircle className="w-6 h-6 text-white" />
-                    )}
+                    {isSelected && <CheckCircle className="w-6 h-6 text-white" />}
                 </div>
             </button>
         );
     };
+
+    const renderActionButton = (label: string, onClick: () => void, bgColor: string, txnId: string) => (
+        <button
+            key={`${txnId}-${label}`}
+            onClick={onClick}
+            className={`p-4 ${bgColor} border-2 border-gray-300 rounded-xl hover:border-purple-400 transition-all shadow-sm cursor-pointer hover:shadow-lg hover:scale-[1.01] ${label === 'Categorize' ? 'm-2' : ''}`}
+        >
+            <div className="font-semibold text-gray-800">{label}</div>
+        </button>
+    );
+
+    const renderEnvironmentToggle = () => (
+        <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Environment</label>
+            <div className="flex gap-3">
+                {(['live', 'dev'] as const).map((env) => (
+                    <button
+                        key={env}
+                        onClick={() => setEnvironment(env)}
+                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                            environment === env
+                                ? 'bg-purple-600 text-white shadow-md'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                    >
+                        {env.charAt(0).toUpperCase() + env.slice(1)}
+                    </button>
+                ))}
+            </div>
+            <p className="mt-2 text-xs text-gray-500">
+                {environment === 'live'
+                    ? 'Using production API (https://api.starlingbank.com)'
+                    : 'Using development API (https://api-sandbox.starlingbank.com)'}
+            </p>
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
@@ -289,10 +295,7 @@ const SpaceTransferApp: React.FC = () => {
                             <h1 className="text-2xl font-bold text-gray-800">Space Transfer Tool</h1>
                         </div>
                         {step !== 'setup' && (
-                            <button
-                                onClick={reset}
-                                className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
-                            >
+                            <button onClick={reset} className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1">
                                 <RefreshCw className="w-4 h-4" />
                                 Reset
                             </button>
@@ -315,36 +318,7 @@ const SpaceTransferApp: React.FC = () => {
 
                     {step === 'setup' && (
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">
-                                    Environment
-                                </label>
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => setEnvironment('live')}
-                                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                                            environment === 'live'
-                                                ? 'bg-purple-600 text-white shadow-md'
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
-                                    >
-                                        Live
-                                    </button>
-                                    <button
-                                        onClick={() => setEnvironment('dev')}
-                                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                                            environment === 'dev'
-                                                ? 'bg-purple-600 text-white shadow-md'
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
-                                    >
-                                        Dev
-                                    </button>
-                                </div>
-                                <p className="mt-2 text-xs text-gray-500">
-                                    {environment === 'live' ? 'Using production API (https://api.starlingbank.com)' : 'Using development API (https://api-sandbox.starlingbank.com)'}
-                                </p>
-                            </div>
+                            {renderEnvironmentToggle()}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Starling API Access Token
@@ -406,7 +380,7 @@ const SpaceTransferApp: React.FC = () => {
                                 </div>
                             ) : (
                                 transactions.map(txn => (
-                                    <div className="w-full p-4 bg-white border-2 border-gray-300 rounded-xl transition-all text-left shadow-sm">
+                                    <div key={txn.feedItemUid} className="w-full p-4 bg-white border-2 border-gray-300 rounded-xl transition-all text-left shadow-sm">
                                         <div className="flex items-center justify-between">
                                             <div className="flex-1">
                                                 <div className="font-semibold text-gray-800">{txn.counterPartyName || 'Unknown'}</div>
@@ -418,24 +392,14 @@ const SpaceTransferApp: React.FC = () => {
                                             <div className="text-right">
                                                 <div className="font-bold text-purple-600">{formatAmount(txn.amount)}</div>
                                             </div>
-                                            <button
-                                                className="p-4 m-2 bg-blue-400 border-2 border-gray-300 rounded-xl hover:border-purple-400 transition-all shadow-sm cursor-pointer hover:shadow-lg hover:scale-[1.01]"
-                                                key={txn.feedItemUid}
-                                                onClick={() => {
-                                                    setSelectedTransaction(txn);
-                                                    fetchSpaces(selectedAccount!.accountUid);
-                                                }}>
-                                                <div className="font-semibold text-gray-800">Categorize</div>
-                                            </button>
-                                            <button
-                                                className="p-4 bg-red-400 border-2 border-gray-300 rounded-xl hover:border-purple-400 transition-all shadow-sm cursor-pointer hover:shadow-lg hover:scale-[1.01]"
-                                                key={txn.feedItemUid+'-ignore'}
-                                                       onClick={() => {
-                                                           setSelectedTransaction(txn);
-                                                           ignoreTransaction()
-                                                       }}>
-                                                <div className="font-semibold text-gray-800">Ignore</div>
-                                            </button>
+                                            {renderActionButton('Categorize', () => {
+                                                setSelectedTransaction(txn);
+                                                fetchSpaces(selectedAccount!.accountUid);
+                                            }, 'bg-blue-400', txn.feedItemUid)}
+                                            {renderActionButton('Ignore', () => {
+                                                setSelectedTransaction(txn);
+                                                ignoreTransaction();
+                                            }, 'bg-red-400', txn.feedItemUid)}
                                         </div>
                                     </div>
                                 ))
@@ -467,9 +431,7 @@ const SpaceTransferApp: React.FC = () => {
                                 </div>
                             )}
                             {savingsGoals.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500">
-                                    No savings goals found
-                                </div>
+                                <div className="text-center py-8 text-gray-500">No savings goals found</div>
                             ) : (
                                 savingsGoals.map(space =>
                                     renderSpaceButton(
@@ -479,7 +441,7 @@ const SpaceTransferApp: React.FC = () => {
                                     )
                                 )
                             )}
-                            {(selectedSavingsGoal) && (
+                            {selectedSavingsGoal && (
                                 <button
                                     onClick={performTransfer}
                                     disabled={loading}
