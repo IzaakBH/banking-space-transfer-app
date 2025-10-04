@@ -1,14 +1,14 @@
-# Step 1: Use an official Nginx image
-FROM nginx:alpine
+FROM node:24-alpine AS builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
-# Step 2: Copy build files to Nginx public folder
-COPY ./dist /usr/share/nginx/html
+FROM nginx:alpine AS runner
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Step 3: Copy custom Nginx config (optional, but recommended)
-COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 8080
 
-# Step 4: Expose port 80
-EXPOSE 80
-
-# Step 5: Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
