@@ -40,3 +40,6 @@ In theory, this app could be used for any bank that has spaces (i.e. Monzo). It 
 
 The app was also pretty much entirely written by Claude. As such, it doesnt have great coding practices.
 There is a lot of room for refactoring to make it nicer.
+
+# Attributions
+Favicon by Font Awesome http://fontawesome.com. 
