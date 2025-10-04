@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  base: "https://plutus.15062000.xyz",
   server: {
     proxy: {
       '/live/api': {

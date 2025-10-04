@@ -34,6 +34,8 @@ These will ensure that even if your token goes missing, an attacker can't make p
 The next big change is being able to host this somewhere. Ill probably spin up a public instance for people to test, as well
 as a private instance for myself.
 
+Make the vite config configurable based on some env var. This will allow the url to be changed by the person using the docker image
+
 UX could be improved by making it clearer the app is loading. 
 
 In theory, this app could be used for any bank that has spaces (i.e. Monzo). It would require some refactors.
