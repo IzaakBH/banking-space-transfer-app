@@ -342,7 +342,7 @@ const SpaceTransferApp: React.FC = () => {
                                     </button>
                                 </div>
                                 <p className="mt-2 text-xs text-gray-500">
-                                    {environment === 'live' ? 'Using production API (/live/api)' : 'Using development API (/dev/api)'}
+                                    {environment === 'live' ? 'Using production API (https://api.starlingbank.com)' : 'Using development API (https://api-sandbox.starlingbank.com)'}
                                 </p>
                             </div>
                             <div>
