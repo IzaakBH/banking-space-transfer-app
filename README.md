@@ -24,17 +24,29 @@ You should only give your token the minimum scopes, namely...
 
 These will ensure that even if your token goes missing, an attacker can't make payments out of your account.
 
+# Demo
+I have an instance of this running on https://plutus.15062000.xyz
+
+Nothing is stored server side, so its safe to use with your actual bank token if you wish. Make sure to only use a token
+with the above permissions!
+
 # Set Up
 
+## Dev
 1) Get a Personal Access Token for your starling account/sandbox account. See the [docs](https://developer.starlingbank.com/).
-2) Run the app (Instructions to come)
+2) npm run dev
 3) Use the interface, it should be pretty self explanatory.
 
-# Future changes
-The next big change is being able to host this somewhere. Ill probably spin up a public instance for people to test, as well
-as a private instance for myself.
+## Prod
+This guide assumes you are going to use docker. If you wish to put it behind a reverse proxy & cloudflare, be my guest. It's no different than any other app
 
-Make the vite config configurable based on some env var. This will allow the url to be changed by the person using the docker image
+1) Same as step one for dev
+2) Pull this repo
+3) CD to the repo
+3) Run `docker build -t space-transfer-app .`
+4) Create the container either with docker or docker compose. The app runs on port 8080
+
+# Future changes
 
 UX could be improved by making it clearer the app is loading. 
 
