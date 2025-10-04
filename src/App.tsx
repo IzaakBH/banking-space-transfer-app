@@ -136,6 +136,7 @@ const SpaceTransferApp: React.FC = () => {
     };
 
     const tagTransaction = async (): Promise<void> => {
+        if (!selectedTransaction || !selectedAccount) return;
 
         // Tag transaction
         const note = selectedTransaction.userNote
@@ -183,11 +184,6 @@ const SpaceTransferApp: React.FC = () => {
 
     const performTransfer = async (): Promise<void> => {
         if (!selectedAccount || !selectedTransaction || !selectedSavingsGoal) return;
-
-        if (selectedSavingsGoal === "ignored") {
-            await ignoreTransaction();
-            return;
-        }
 
         setLoading(true);
         setError(null);
@@ -245,8 +241,8 @@ const SpaceTransferApp: React.FC = () => {
     ) => {
         const balance = space.totalSaved;
         const uid = space.savingsGoalUid;
-        const hasInsufficientFunds = selectedTransaction && balance &&
-            balance.minorUnits < selectedTransaction.amount.minorUnits;
+        const hasInsufficientFunds = (selectedTransaction && balance &&
+            balance.minorUnits < selectedTransaction.amount.minorUnits) ?? true;
 
         return (
             <button
@@ -410,14 +406,7 @@ const SpaceTransferApp: React.FC = () => {
                                 </div>
                             ) : (
                                 transactions.map(txn => (
-                                    <button
-                                        key={txn.feedItemUid}
-                                        onClick={() => {
-                                            setSelectedTransaction(txn);
-                                            fetchSpaces(selectedAccount!.accountUid);
-                                        }}
-                                        className="w-full p-4 bg-white border-2 border-gray-300 rounded-xl hover:border-purple-400 hover:shadow-lg hover:scale-[1.01] transition-all text-left shadow-sm cursor-pointer"
-                                    >
+                                    <div className="w-full p-4 bg-white border-2 border-gray-300 rounded-xl transition-all text-left shadow-sm">
                                         <div className="flex items-center justify-between">
                                             <div className="flex-1">
                                                 <div className="font-semibold text-gray-800">{txn.counterPartyName || 'Unknown'}</div>
@@ -429,8 +418,26 @@ const SpaceTransferApp: React.FC = () => {
                                             <div className="text-right">
                                                 <div className="font-bold text-purple-600">{formatAmount(txn.amount)}</div>
                                             </div>
+                                            <button
+                                                className="p-4 m-2 bg-blue-400 border-2 border-gray-300 rounded-xl hover:border-purple-400 transition-all shadow-sm cursor-pointer hover:shadow-lg hover:scale-[1.01]"
+                                                key={txn.feedItemUid}
+                                                onClick={() => {
+                                                    setSelectedTransaction(txn);
+                                                    fetchSpaces(selectedAccount!.accountUid);
+                                                }}>
+                                                <div className="font-semibold text-gray-800">Categorize</div>
+                                            </button>
+                                            <button
+                                                className="p-4 bg-red-400 border-2 border-gray-300 rounded-xl hover:border-purple-400 transition-all shadow-sm cursor-pointer hover:shadow-lg hover:scale-[1.01]"
+                                                key={txn.feedItemUid+'-ignore'}
+                                                       onClick={() => {
+                                                           setSelectedTransaction(txn);
+                                                           ignoreTransaction()
+                                                       }}>
+                                                <div className="font-semibold text-gray-800">Ignore</div>
+                                            </button>
                                         </div>
-                                    </button>
+                                    </div>
                                 ))
                             )}
                         </div>
@@ -459,26 +466,6 @@ const SpaceTransferApp: React.FC = () => {
                                     </div>
                                 </div>
                             )}
-                            <button
-                                key="ignoreTxn"
-                                onClick={() => setSelectedSavingsGoal("ignored")}
-                                className={`w-full p-4 rounded-xl transition-all text-left shadow-sm ${
-                                    selectedSavingsGoal === "ignored"
-                                            ? 'bg-purple-500 border-2 border-purple-600 shadow-md transform scale-[1.02]'
-                                            : 'bg-white border-2 border-gray-300 hover:border-purple-400 hover:shadow-lg hover:scale-[1.01] cursor-pointer'
-                                }`}
-                            >
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <div className={`font-semibold ${selectedSavingsGoal === "ignored" ? 'text-white' : 'text-gray-800'}`}>
-                                            Ignore Transaction
-                                        </div>
-                                    </div>
-                                    {selectedSavingsGoal === "ignored" && (
-                                        <CheckCircle className="w-6 h-6 text-white" />
-                                    )}
-                                </div>
-                            </button>
                             {savingsGoals.length === 0 ? (
                                 <div className="text-center py-8 text-gray-500">
                                     No savings goals found
