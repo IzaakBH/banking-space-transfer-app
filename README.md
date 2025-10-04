@@ -1,73 +1,24 @@
-# React + TypeScript + Vite
+# Banking Space Transfer App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+My method of managing my budget is maintaining a set of spaces in my banking app (Starling). 
+More details on Spaces at Starling [here](https://www.starlingbank.com/features/spaces/)
 
-Currently, two official plugins are available:
+I currently have to manually transfer money out of spaces for each transaction, else I run the risk of having 
+no money in my current account & getting declined at the till!
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This app provides an interface which lists valid transactions and spaces and allows you to transfer the exact transfer 
+amount between them with a few clicks.
 
-## React Compiler
+It adds notes on transactions to ensure they dont get shown again (but also has built in idempotency to ensure transfers happen once and only once).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+# Set Up
 
-## Expanding the ESLint configuration
+1) Get a Personal Access Token for your starling account/sandbox account. See the [docs](https://developer.starlingbank.com/)
+2) Run the app (Instructions to come)
+3) Use the interface, it should be pretty self explanatory.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+# Future changes
+In theory, this app could be used for any bank that has spaces (i.e. Monzo). It would require some refactors.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+The app was also pretty much entirely written by Claude. As such, it doesnt have great coding practices.
+There is a lot of room for refactoring to make it nicer.
