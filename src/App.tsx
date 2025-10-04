@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { ArrowRight, RefreshCw, CheckCircle, AlertCircle, Wallet, CreditCard } from 'lucide-react';
+import { RefreshCw, CheckCircle, AlertCircle, Wallet } from 'lucide-react';
+import { SelectSpace } from './pages/SelectSpace';
+import { Setup } from './pages/Setup';
+import { SelectAccount } from './pages/SelectAccount';
+import { SelectTransaction } from './pages/SelectTransaction';
 
 // Types
 interface Amount {
@@ -75,6 +79,18 @@ const SpaceTransferApp: React.FC = () => {
         return res.json();
     };
 
+    const apiFetchNoResponse = async (endpoint: string, options?: RequestInit) => {
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+            ...options,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+                ...options?.headers,
+            }
+        });
+        if (!res.ok) throw new Error(`API request failed: ${endpoint}`);
+    }
+
     const fetchAccounts = async (): Promise<void> => {
         setLoading(true);
         setError(null);
@@ -139,7 +155,7 @@ const SpaceTransferApp: React.FC = () => {
             ? `${selectedTransaction.userNote} | transferred: true`
             : 'transferred: true';
 
-        await apiFetch(
+        await apiFetchNoResponse(
             `/v2/feed/account/${selectedAccount.accountUid}/category/${selectedTransaction.categoryUid}/${selectedTransaction.feedItemUid}/user-note`,
             {
                 method: 'PUT',
@@ -195,10 +211,6 @@ const SpaceTransferApp: React.FC = () => {
         }
     };
 
-    const formatAmount = (amount: Amount): string => {
-        const value = (amount.minorUnits / 100).toFixed(2);
-        return `${amount.currency} ${value}`;
-    };
 
     const reset = (): void => {
         setStep('setup');
@@ -210,80 +222,6 @@ const SpaceTransferApp: React.FC = () => {
         setError(null);
         setSuccess(null);
     };
-
-    const renderSpaceButton = (space: SavingsGoal, isSelected: boolean, onSelect: () => void) => {
-        const balance = space.totalSaved;
-        const hasInsufficientFunds = (selectedTransaction && balance &&
-            balance.minorUnits < selectedTransaction.amount.minorUnits) ?? true;
-
-        return (
-            <button
-                key={space.savingsGoalUid}
-                onClick={() => !hasInsufficientFunds && onSelect()}
-                disabled={hasInsufficientFunds}
-                className={`w-full p-4 rounded-xl transition-all text-left shadow-sm ${
-                    hasInsufficientFunds
-                        ? 'bg-gray-100 border-2 border-gray-200 opacity-60 cursor-not-allowed'
-                        : isSelected
-                            ? 'bg-purple-500 border-2 border-purple-600 shadow-md transform scale-[1.02]'
-                            : 'bg-white border-2 border-gray-300 hover:border-purple-400 hover:shadow-lg hover:scale-[1.01] cursor-pointer'
-                }`}
-            >
-                <div className="flex items-center justify-between">
-                    <div>
-                        <div className={`font-semibold ${isSelected ? 'text-white' : 'text-gray-800'}`}>
-                            {space.name}
-                        </div>
-                        <div className={`text-sm ${isSelected ? 'text-purple-100' : 'text-gray-600'}`}>
-                            Balance: {balance ? formatAmount(balance) : 'N/A'}
-                        </div>
-                        {hasInsufficientFunds && (
-                            <div className="text-xs text-red-600 mt-1 font-medium">
-                                Insufficient funds
-                            </div>
-                        )}
-                    </div>
-                    {isSelected && <CheckCircle className="w-6 h-6 text-white" />}
-                </div>
-            </button>
-        );
-    };
-
-    const renderActionButton = (label: string, onClick: () => void, bgColor: string, txnId: string) => (
-        <button
-            key={`${txnId}-${label}`}
-            onClick={onClick}
-            className={`p-4 ${bgColor} border-2 border-gray-300 rounded-xl hover:border-purple-400 transition-all shadow-sm cursor-pointer hover:shadow-lg hover:scale-[1.01] ${label === 'Categorize' ? 'm-2' : ''}`}
-        >
-            <div className="font-semibold text-gray-800">{label}</div>
-        </button>
-    );
-
-    const renderEnvironmentToggle = () => (
-        <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Environment</label>
-            <div className="flex gap-3">
-                {(['live', 'dev'] as const).map((env) => (
-                    <button
-                        key={env}
-                        onClick={() => setEnvironment(env)}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                            environment === env
-                                ? 'bg-purple-600 text-white shadow-md'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                    >
-                        {env.charAt(0).toUpperCase() + env.slice(1)}
-                    </button>
-                ))}
-            </div>
-            <p className="mt-2 text-xs text-gray-500">
-                {environment === 'live'
-                    ? 'Using production API (https://api.starlingbank.com)'
-                    : 'Using development API (https://api-sandbox.starlingbank.com)'}
-            </p>
-        </div>
-    );
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
@@ -317,140 +255,45 @@ const SpaceTransferApp: React.FC = () => {
                     )}
 
                     {step === 'setup' && (
-                        <div className="space-y-4">
-                            {renderEnvironmentToggle()}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Starling API Access Token
-                                </label>
-                                <input
-                                    type="password"
-                                    value={accessToken}
-                                    onChange={(e) => setAccessToken(e.target.value)}
-                                    placeholder="Enter your access token"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                />
-                                <p className="mt-2 text-xs text-gray-500">
-                                    Required scopes: account:read, account-list:read, transaction:read, space:read, transaction:edit, savings-goal-transfer:create
-                                </p>
-                            </div>
-                            <button
-                                onClick={fetchAccounts}
-                                disabled={!accessToken || loading}
-                                className="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 hover:shadow-lg hover:scale-[1.02] disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none transition-all shadow-md flex items-center justify-center gap-2"
-                            >
-                                {loading ? 'Loading...' : 'Load Accounts'}
-                                {!loading && <ArrowRight className="w-5 h-5" />}
-                            </button>
-                        </div>
+                        <Setup
+                            environment={environment}
+                            setEnvironment={setEnvironment}
+                            accessToken={accessToken}
+                            setAccessToken={setAccessToken}
+                            fetchAccounts={fetchAccounts}
+                            loading={loading}
+                        />
                     )}
 
                     {step === 'selectAccount' && (
-                        <div className="space-y-3">
-                            <h2 className="text-lg font-semibold text-gray-800 mb-4">Select Account</h2>
-                            {accounts.map(account => (
-                                <button
-                                    key={account.accountUid}
-                                    onClick={() => {
-                                        setSelectedAccount(account);
-                                        fetchTransactions(account.accountUid);
-                                    }}
-                                    className="w-full p-4 bg-white border-2 border-gray-300 rounded-xl hover:border-purple-400 hover:shadow-lg hover:scale-[1.01] transition-all text-left shadow-sm cursor-pointer"
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <div className="font-semibold text-gray-800">{account.name || 'Personal Account'}</div>
-                                            <div className="text-sm text-gray-600">{account.accountType}</div>
-                                        </div>
-                                        <CreditCard className="w-6 h-6 text-purple-500" />
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
+                        <SelectAccount
+                            accounts={accounts}
+                            setSelectedAccount={setSelectedAccount}
+                            fetchTransactions={fetchTransactions}
+                        />
                     )}
 
                     {step === 'selectTransaction' && (
-                        <div className="space-y-3">
-                            <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                                Select Transaction ({transactions.length} available)
-                            </h2>
-                            {transactions.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500">
-                                    No eligible transactions found in the last 7 days
-                                </div>
-                            ) : (
-                                transactions.map(txn => (
-                                    <div key={txn.feedItemUid} className="w-full p-4 bg-white border-2 border-gray-300 rounded-xl transition-all text-left shadow-sm">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex-1">
-                                                <div className="font-semibold text-gray-800">{txn.counterPartyName || 'Unknown'}</div>
-                                                <div className="text-sm text-gray-600">{txn.reference || 'No reference'}</div>
-                                                <div className="text-xs text-gray-500 mt-1">
-                                                    {new Date(txn.transactionTime).toLocaleDateString()}
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="font-bold text-purple-600">{formatAmount(txn.amount)}</div>
-                                            </div>
-                                            {renderActionButton('Categorize', () => {
-                                                setSelectedTransaction(txn);
-                                                fetchSpaces(selectedAccount!.accountUid);
-                                            }, 'bg-blue-400', txn.feedItemUid)}
-                                            {renderActionButton('Ignore', () => {
-                                                setSelectedTransaction(txn);
-                                                ignoreTransaction();
-                                            }, 'bg-red-400', txn.feedItemUid)}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                        <SelectTransaction
+                            transactions={transactions}
+                            setSelectedTransaction={setSelectedTransaction}
+                            fetchSpaces={fetchSpaces}
+                            ignoreTransaction={ignoreTransaction}
+                            selectedAccount={selectedAccount}
+                        />
                     )}
 
                     {step === 'selectSpace' && (
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-semibold text-gray-800">Select Space to Withdraw From</h2>
-                                <button
-                                    onClick={() => {
-                                        setSelectedTransaction(null);
-                                        setSelectedSavingsGoal(null);
-                                        setStep('selectTransaction');
-                                    }}
-                                    className="text-sm text-purple-600 hover:text-purple-800 font-medium flex items-center gap-1"
-                                >
-                                    ← Back
-                                </button>
-                            </div>
-                            {selectedTransaction && (
-                                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                    <div className="text-sm text-blue-800">
-                                        <div className="font-medium">Transaction: {selectedTransaction.counterPartyName}</div>
-                                        <div className="font-bold">{formatAmount(selectedTransaction.amount)}</div>
-                                    </div>
-                                </div>
-                            )}
-                            {savingsGoals.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500">No savings goals found</div>
-                            ) : (
-                                savingsGoals.map(space =>
-                                    renderSpaceButton(
-                                        space,
-                                        selectedSavingsGoal?.savingsGoalUid === space.savingsGoalUid,
-                                        () => setSelectedSavingsGoal(space)
-                                    )
-                                )
-                            )}
-                            {selectedSavingsGoal && (
-                                <button
-                                    onClick={performTransfer}
-                                    disabled={loading}
-                                    className="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 hover:shadow-lg hover:scale-[1.02] disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none transition-all shadow-md mt-4"
-                                >
-                                    {loading ? 'Processing...' : 'Confirm Transfer'}
-                                </button>
-                            )}
-                        </div>
+                        <SelectSpace
+                            selectedTransaction={selectedTransaction}
+                            setSelectedTransaction={setSelectedTransaction}
+                            selectedSavingsGoal={selectedSavingsGoal}
+                            setSelectedSavingsGoal={setSelectedSavingsGoal}
+                            loading={loading}
+                            setStep={setStep}
+                            savingsGoals={savingsGoals}
+                            performTransfer={performTransfer}
+                        />
                     )}
                 </div>
 
