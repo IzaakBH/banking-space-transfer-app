@@ -18,6 +18,9 @@ It adds notes on transactions to ensure they dont get shown again (but also has 
 3) Use the interface, it should be pretty self explanatory.
 
 # Future changes
+The next big change is being able to host this somewhere. Ill probably spin up a public instance for people to test, as well
+as a private instance for myself.
+
 In theory, this app could be used for any bank that has spaces (i.e. Monzo). It would require some refactors.
 
 The app was also pretty much entirely written by Claude. As such, it doesnt have great coding practices.
