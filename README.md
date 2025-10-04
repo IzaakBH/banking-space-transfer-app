@@ -11,15 +11,30 @@ amount between them with a few clicks.
 
 It adds notes on transactions to ensure they dont get shown again (but also has built in idempotency to ensure transfers happen once and only once).
 
+# Security
+Tokens are never sent to the server. All processing and calls are done client side.
+
+You should only give your token the minimum scopes, namely...
+- account:read
+- account-list:read
+- transaction:read
+- space:read
+- transaction:edit
+- savings-goal-transfer:create
+
+These will ensure that even if your token goes missing, an attacker can't make payments out of your account.
+
 # Set Up
 
-1) Get a Personal Access Token for your starling account/sandbox account. See the [docs](https://developer.starlingbank.com/)
+1) Get a Personal Access Token for your starling account/sandbox account. See the [docs](https://developer.starlingbank.com/).
 2) Run the app (Instructions to come)
 3) Use the interface, it should be pretty self explanatory.
 
 # Future changes
 The next big change is being able to host this somewhere. Ill probably spin up a public instance for people to test, as well
 as a private instance for myself.
+
+UX could be improved by making it clearer the app is loading. 
 
 In theory, this app could be used for any bank that has spaces (i.e. Monzo). It would require some refactors.
 
