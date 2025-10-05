@@ -120,8 +120,7 @@ const SpaceTransferApp: React.FC = () => {
 
             const filtered = (data.feedItems || []).filter((item: Transaction) =>
                 item.direction === 'OUT' &&
-                item.status === 'SETTLED' &&
-                item.source !== 'DIRECT_DEBIT' &&
+                (item.status === 'SETTLED' || item.status === 'PENDING') &&
                 (!item.userNote || !item.userNote.includes('transferred: true'))
             );
 
@@ -227,14 +226,15 @@ const SpaceTransferApp: React.FC = () => {
         <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
             <div className="max-w-2xl mx-auto">
                 <div className="bg-white rounded-2xl shadow-xl p-6 mb-4">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-6 relative">
                         <div className="flex items-center gap-3">
-                            <Wallet className="w-8 h-8 text-purple-600" />
+                            <Wallet className="w-8 h-8 text-purple-600"/>
                             <h1 className="text-2xl font-bold text-gray-800">Space Transfer Tool</h1>
                         </div>
                         {step !== 'setup' && (
-                            <button onClick={reset} className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1">
-                                <RefreshCw className="w-4 h-4" />
+                            <button onClick={reset}
+                                    className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1">
+                                <RefreshCw className="w-4 h-4"/>
                                 Reset
                             </button>
                         )}
@@ -242,16 +242,33 @@ const SpaceTransferApp: React.FC = () => {
 
                     {error && (
                         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"/>
                             <div className="text-red-800 text-sm">{error}</div>
                         </div>
                     )}
 
                     {success && (
                         <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
-                            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5"/>
                             <div className="text-green-800 text-sm">{success}</div>
                         </div>
+                    )}
+
+                    { loading && (
+                    <div className="w-full h-full fixed top-0 left-0 bg-white opacity-75 z-50">
+                        <div className="flex justify-center items-center mt-[50vh]">
+                            <span className="text-3xl mr-4">Loading</span>
+                            <svg className="animate-spin h-8 w-8 text-gray-800" xmlns="http://www.w3.org/2000/svg"
+                                 fill="none"
+                                 viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                <path className="opacity-75" fill="currentColor"
+                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
                     )}
 
                     {step === 'setup' && (
@@ -299,7 +316,8 @@ const SpaceTransferApp: React.FC = () => {
 
                 <div className="text-center text-sm text-gray-600">
                     <p>Starling Bank Space Transfer Tool</p>
-                    <p className="text-xs mt-1">Environment: {environment === 'live' ? 'Live' : 'Dev'} | Uses Starling Bank API v2</p>
+                    <p className="text-xs mt-1">Environment: {environment === 'live' ? 'Live' : 'Dev'} | Uses Starling
+                        Bank API v2</p>
                 </div>
             </div>
         </div>
