@@ -6,7 +6,7 @@ import { SelectAccount } from './pages/SelectAccount';
 import { SelectTransaction } from './pages/SelectTransaction';
 
 // Types
-interface Amount {
+export interface Amount {
     currency: string;
     minorUnits: number;
 }
