@@ -1,14 +1,14 @@
-import React from "react";
 import {CheckCircle} from "lucide-react";
 import {formatAmount} from "../util/Utils"
+import type { Step, Transaction, SavingsGoal } from '../App'
 
 interface SelectSpaceProps {
-    selectedTransaction: Transaction,
-    setSelectedTransaction: (transaction: Transaction) => void,
-    selectedSavingsGoal: SavingsGoal,
-    setSelectedSavingsGoal: (savingsGoal: SavingsGoal) => void,
+    selectedTransaction: Transaction | null,
+    setSelectedTransaction: (transaction: Transaction | null) => void,
+    selectedSavingsGoal: SavingsGoal | null,
+    setSelectedSavingsGoal: (savingsGoal: SavingsGoal | null) => void,
     loading: boolean,
-    setStep: (step: string) => void,
+    setStep: (step: Step) => void,
     savingsGoals: SavingsGoal[],
     performTransfer: () => void
 }

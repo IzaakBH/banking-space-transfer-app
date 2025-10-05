@@ -1,9 +1,9 @@
 import {ArrowRight} from "lucide-react";
-import React from "react";
+import type { Env } from "../App";
 
 interface SetupProps {
     environment: string,
-    setEnvironment: (env: string) => void,
+    setEnvironment: (env: Env) => void,
     accessToken: string,
     setAccessToken: (accessToken: string) => void
     fetchAccounts: () => void,

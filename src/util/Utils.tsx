@@ -1,4 +1,4 @@
-import { Amount } from '../App'
+import type { Amount } from '../App'
 
 export const formatAmount = (amount: Amount): string => {
     const value = (amount.minorUnits / 100).toFixed(2);

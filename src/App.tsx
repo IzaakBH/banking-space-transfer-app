@@ -11,7 +11,7 @@ export interface Amount {
     minorUnits: number;
 }
 
-interface Account {
+export interface Account {
     accountUid: string;
     accountType: string;
     defaultCategory: string;
@@ -20,7 +20,7 @@ interface Account {
     name?: string;
 }
 
-interface Transaction {
+export interface Transaction {
     feedItemUid: string;
     categoryUid: string;
     amount: Amount;
@@ -39,7 +39,7 @@ interface Transaction {
     userNote?: string;
 }
 
-interface SavingsGoal {
+export interface SavingsGoal {
     savingsGoalUid: string;
     name: string;
     target?: Amount;
@@ -47,12 +47,13 @@ interface SavingsGoal {
     savedPercentage?: number;
 }
 
-type Step = 'setup' | 'selectAccount' | 'selectTransaction' | 'selectSpace';
+export type Step = 'setup' | 'selectAccount' | 'selectTransaction' | 'selectSpace';
+export type Env = 'live' | 'dev';
 
 const SpaceTransferApp: React.FC = () => {
     const [step, setStep] = useState<Step>('setup');
     const [accessToken, setAccessToken] = useState<string>('');
-    const [environment, setEnvironment] = useState<'live' | 'dev'>('live');
+    const [environment, setEnvironment] = useState<Env>('live');
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
     const [transactions, setTransactions] = useState<Transaction[]>([]);

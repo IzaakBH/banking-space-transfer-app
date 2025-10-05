@@ -1,12 +1,12 @@
-import React from "react";
 import {formatAmount} from "../util/Utils"
+import type {Account, Transaction} from "../App"
 
 interface SelectTransactionProps {
     transactions: Transaction[],
-    setSelectedTransaction: (transaction: Transaction) => void,
+    setSelectedTransaction: (transaction: Transaction | null) => void,
     fetchSpaces: (accountUid: string) => void,
     ignoreTransaction: () => void,
-    selectedAccount: Account
+    selectedAccount: Account | null
 }
 
 export const SelectTransaction = (props: SelectTransactionProps) => {

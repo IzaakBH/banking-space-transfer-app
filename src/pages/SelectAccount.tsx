@@ -1,10 +1,9 @@
 import {CreditCard} from "lucide-react";
-import React from "react";
-
+import type { Account } from "../App";
 interface SelectAccountProps {
     accounts: Account[],
-    setSelectedAccount: (account: Account) => void,
-    fetchTransactions: () => void,
+    setSelectedAccount: (account: Account | null) => void,
+    fetchTransactions: (accountUid: string) => void,
 }
 
 export const SelectAccount = (props: SelectAccountProps) => {
