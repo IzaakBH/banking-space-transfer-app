@@ -139,7 +139,7 @@ const SpaceTransferApp: React.FC = () => {
         setError(null);
         try {
             const data = await apiFetch(`/v2/account/${accountUid}/spaces`);
-            setSavingsGoals(data.savingsGoals.sort((a, b) => a.name.localeCompare(b.name)) || []);
+            setSavingsGoals(data.savingsGoals.sort((a: SavingsGoal, b: SavingsGoal) => a.name.localeCompare(b.name)) || []);
             setStep('selectSpace');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
