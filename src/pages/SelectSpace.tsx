@@ -11,6 +11,36 @@ interface SelectSpaceProps {
     performTransfer: (savingsGoal: SavingsGoal) => void
 }
 
+const calculatePercentage = (space: SavingsGoal): number => {
+    if (!space.target || space.target.minorUnits === 0) {
+        return 0;
+    }
+    const percentage = (space.totalSaved.minorUnits / space.target.minorUnits) * 100;
+    return Math.min(Math.max(percentage, 0), 100);
+};
+
+const getGradientStyle = (percentage: number, hasInsufficientFunds: boolean) => {
+    if (hasInsufficientFunds) {
+        return {
+            background: `linear-gradient(135deg, #f3f4f6 0%, #e5e7eb ${percentage}%, #d1d5db ${percentage}%, #d1d5db 100%)`
+        };
+    }
+
+    // Color transitions: 0-33% Red, 33-66% Orange/Yellow, 66-100% Green
+    let gradientColors;
+    if (percentage < 33) {
+        gradientColors = `#fecaca 0%, #fed7aa ${percentage}%, #ffffff ${percentage}%, #ffffff 100%`;
+    } else if (percentage < 66) {
+        gradientColors = `#fed7aa 0%, #fef3c7 ${percentage}%, #ffffff ${percentage}%, #ffffff 100%`;
+    } else {
+        gradientColors = `#fef3c7 0%, #bbf7d0 ${percentage}%, #ffffff ${percentage}%, #ffffff 100%`;
+    }
+
+    return {
+        background: `linear-gradient(135deg, ${gradientColors})`
+    };
+};
+
 export const SelectSpace = (props: SelectSpaceProps) => {
 
     const {
@@ -25,16 +55,19 @@ export const SelectSpace = (props: SelectSpaceProps) => {
         const balance = space.totalSaved;
         const hasInsufficientFunds = (selectedTransaction && balance &&
             balance.minorUnits < selectedTransaction.amount.minorUnits) ?? true;
+        const percentage = calculatePercentage(space);
+        const gradientStyle = getGradientStyle(percentage, hasInsufficientFunds);
 
         return (
             <button
                 key={space.savingsGoalUid}
                 onClick={() => !hasInsufficientFunds && onSelect()}
                 disabled={hasInsufficientFunds}
-                className={`w-full p-4 rounded-xl transition-all text-left shadow-sm ${
+                style={gradientStyle}
+                className={`w-full p-4 rounded-xl transition-all text-left shadow-sm border-2 ${
                     hasInsufficientFunds
-                        ? 'bg-gray-100 border-2 border-gray-200 opacity-60 cursor-not-allowed'
-                        : 'bg-white border-2 border-gray-300 hover:border-purple-400 hover:shadow-lg hover:scale-[1.01] cursor-pointer'
+                        ? 'border-gray-300 opacity-60 cursor-not-allowed'
+                        : 'border-gray-300 hover:border-purple-400 hover:shadow-lg hover:scale-[1.01] cursor-pointer'
                 }`}
             >
                 <div className="flex items-center justify-between">
@@ -43,7 +76,7 @@ export const SelectSpace = (props: SelectSpaceProps) => {
                             {space.name}
                         </div>
                         <div className={`text-sm text-gray-600`}>
-                            Balance: {balance ? formatAmount(balance) : 'N/A'}
+                            Balance: {balance ? formatAmount(balance) : 'N/A'} {space.target && `- Target: ${formatAmount(space.target)} (${percentage.toFixed(0)}%)`}
                         </div>
                         {hasInsufficientFunds && (
                             <div className="text-xs text-red-600 mt-1 font-medium">
