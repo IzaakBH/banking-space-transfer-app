@@ -1,5 +1,5 @@
 import {CreditCard} from "lucide-react";
-import type { Account } from "../App";
+import type { Account } from "../api/StarlingClient";
 interface SelectAccountProps {
     accounts: Account[],
     setSelectedAccount: (account: Account | null) => void,

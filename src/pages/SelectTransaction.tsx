@@ -1,5 +1,5 @@
 import {formatAmount} from "../util/Utils"
-import type {Account, Transaction} from "../App"
+import type {Account, Transaction} from "../api/StarlingClient"
 
 interface SelectTransactionProps {
     transactions: Transaction[],
