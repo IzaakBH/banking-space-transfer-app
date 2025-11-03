@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { RefreshCw, Wallet } from 'lucide-react';
 import { SelectSpace } from './pages/SelectSpace';
 import { Setup } from './pages/Setup';
