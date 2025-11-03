@@ -10,7 +10,6 @@ import useStarlingAPI, {type Account, type Transaction, type SavingsGoal} from "
 
 export type Step = 'setup' | 'selectAccount' | 'selectTransaction' | 'selectSpace';
 export type Env = 'live' | 'dev';
-const SUCCESS_MESSAGE_DURATION = 3000;
 
 const SpaceTransferApp: React.FC = () => {
     const [step, setStep] = useState<Step>('setup');
@@ -23,14 +22,6 @@ const SpaceTransferApp: React.FC = () => {
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (success) {
-            const timer = setTimeout(() => setSuccess(null), SUCCESS_MESSAGE_DURATION);
-            return () => clearTimeout(timer);
-        }
-    }, [success]);
 
     const api = useStarlingAPI(accessToken, environment);
 
@@ -83,8 +74,6 @@ const SpaceTransferApp: React.FC = () => {
             selectedTransaction.userNote,
         );
 
-        console.log('success');
-        setSuccess('Transaction tagged successfully!');
         setTransactions(prev => prev.filter(t => t.feedItemUid !== selectedTransaction.feedItemUid));
         setSelectedTransaction(null);
         setStep('selectTransaction');
@@ -131,7 +120,6 @@ const SpaceTransferApp: React.FC = () => {
         setSavingsGoals([]);
         setSelectedTransaction(null);
         setError(null);
-        setSuccess(null);
     };
 
     return (
@@ -153,7 +141,6 @@ const SpaceTransferApp: React.FC = () => {
                     </div>
 
                     {error && (<Alert type='error' message={error}/>)}
-                    {success && (<Alert type='success' message={success}/>)}
                     { loading && (<Spinner/>)}
 
                     {step === 'setup' && (
